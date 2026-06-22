@@ -17,7 +17,20 @@
       "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q -m 'Replace logo with made make material mark; add 브랜드 스토리 nav item *)",
       "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q --amend -m 'Replace logo with made make material mark; add 브랜드 스토리 nav item *)",
       "mcp__claude_ai_Vercel__deploy_to_vercel",
-      "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q -m 'Apply logo + 브랜드 스토리 nav to publicDir \\(formani.com/\\) — the real build source *)"
+      "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q -m 'Apply logo + 브랜드 스토리 nav to publicDir \\(formani.com/\\) — the real build source *)",
+      "Bash(curl -s \"https://mmm-hompage.vercel.app/react-pages/home.html\")",
+      "Bash(curl -s \"https://mmm-hompage.vercel.app/application/themes/ztheme/images/redesign/formani-logo.svg\")",
+      "Bash(xxd)",
+      "Bash(python3 -c \"import fontTools; print\\('fonttools', fontTools.version\\)\")",
+      "Bash(python3 -m pip --version)",
+      "Bash(python3 -m pip install --quiet fonttools)",
+      "Bash(curl -sL -o /tmp/Figtree.ttf \"https://github.com/google/fonts/raw/main/ofl/figtree/Figtree%5Bwght%5D.ttf\")",
+      "Bash(python3 -c \"from fontTools.ttLib import TTFont; f=TTFont\\('/tmp/Figtree.ttf'\\); print\\('axes', [\\(a.axisTag,a.minValue,a.defaultValue,a.maxValue\\) for a in f['fvar'].axes] if 'fvar' in f else 'static'\\); print\\('upem', f['head'].unitsPerEm\\)\")",
+      "Bash(/tmp/fontvenv/bin/python -)",
+      "Bash(cp /tmp/logo_header.svg \"/tmp/logocheck.svg\")",
+      "Bash(rm -f \"/tmp/logocheck.svg.png\")",
+      "Bash(qlmanage -t -s 1200 -o /tmp \"/tmp/logocheck.svg\")",
+      "Bash(ls -la /tmp/logocheck.svg.png)"
     ]
   }
 }
