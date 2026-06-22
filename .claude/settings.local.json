@@ -15,7 +15,9 @@
       "Bash(git checkout *)",
       "Bash(git add *)",
       "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q -m 'Replace logo with made make material mark; add 브랜드 스토리 nav item *)",
-      "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q --amend -m 'Replace logo with made make material mark; add 브랜드 스토리 nav item *)"
+      "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q --amend -m 'Replace logo with made make material mark; add 브랜드 스토리 nav item *)",
+      "mcp__claude_ai_Vercel__deploy_to_vercel",
+      "Bash(git -c user.name=jinsoo -c user.email=sbbc212@gmail.com commit -q -m 'Apply logo + 브랜드 스토리 nav to publicDir \\(formani.com/\\) — the real build source *)"
     ]
   }
 }
