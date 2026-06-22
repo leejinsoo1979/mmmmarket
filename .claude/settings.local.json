@@ -30,7 +30,10 @@
       "Bash(cp /tmp/logo_header.svg \"/tmp/logocheck.svg\")",
       "Bash(rm -f \"/tmp/logocheck.svg.png\")",
       "Bash(qlmanage -t -s 1200 -o /tmp \"/tmp/logocheck.svg\")",
-      "Bash(ls -la /tmp/logocheck.svg.png)"
+      "Bash(ls -la /tmp/logocheck.svg.png)",
+      "Bash(sips -c 130 460 --cropOffset 0 0 /tmp/live2.png --out /tmp/logo_crop.png)",
+      "Bash(sips -z 390 1380 /tmp/logo_crop.png --out /tmp/logo_crop_big.png)",
+      "Bash(git -c user.name=\"jinsoo\" -c user.email=\"sbbc212@gmail.com\" commit -q -m \"Make wordmark logo responsive \\(width:100%, preserveAspectRatio\\) so it never clips\")"
     ]
   }
 }

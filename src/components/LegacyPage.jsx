@@ -88,6 +88,13 @@ function addMetaNode(node) {
   }
 }
 
+function appendInlineScript(text) {
+  const clone = document.createElement('script');
+  clone.setAttribute('data-legacy-script', 'true');
+  clone.textContent = text;
+  document.body.appendChild(clone);
+}
+
 function runScript(script) {
   return new Promise((resolve) => {
     const clone = document.createElement('script');
@@ -99,16 +106,35 @@ function runScript(script) {
     }
 
     if (script.src) {
+      clone.setAttribute('data-legacy-script', 'true');
       clone.onload = resolve;
       clone.onerror = resolve;
       clone.src = script.src;
     } else {
-      clone.textContent = script.textContent;
+      appendInlineScript(script.textContent);
       resolve();
     }
 
-    document.body.appendChild(clone);
+    if (script.src) {
+      document.body.appendChild(clone);
+    }
   });
+}
+
+function rerunDeferredSliders(scripts) {
+  if (typeof window.tinySlider !== 'function') {
+    return;
+  }
+
+  scripts
+    .filter((script) => !script.src && script.textContent?.includes('tinySlider('))
+    .forEach((script) => appendInlineScript(script.textContent));
+}
+
+function replayLegacyLoadEvents() {
+  window.dispatchEvent(new Event('load'));
+  window.dispatchEvent(new Event('resize'));
+  window.dispatchEvent(new Event('scroll'));
 }
 
 export default function LegacyPage({ source }) {
@@ -155,6 +181,10 @@ export default function LegacyPage({ source }) {
                 return;
               }
               await runScript(script);
+            }
+            if (!cancelled) {
+              rerunDeferredSliders(scripts);
+              replayLegacyLoadEvents();
             }
           }, 0);
         }
