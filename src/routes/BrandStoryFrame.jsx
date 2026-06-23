@@ -25,14 +25,19 @@ export default function BrandStoryFrame() {
     try {
       const doc = e.target.contentDocument;
       if (!doc) return;
-      const toHome = (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        window.location.assign('/');
-      };
-      doc.querySelectorAll('a.brandmark').forEach((a) => {
-        a.addEventListener('click', toHome, true);
-      });
+      // Delegate on the document (capture phase) so it survives any
+      // hydration/re-render that replaces the <a class="brandmark"> node.
+      doc.addEventListener(
+        'click',
+        (ev) => {
+          const a = ev.target.closest && ev.target.closest('a.brandmark');
+          if (!a) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          window.location.assign('/');
+        },
+        true
+      );
     } catch (_) {
       /* cross-origin or not ready — ignore */
     }
