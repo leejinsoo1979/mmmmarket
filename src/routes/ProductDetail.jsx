@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import './ProductDetail.css';
+import { holdAppBoot, releaseAppBootBeforePaint } from '../utils/appBoot.js';
 
 function clean(value) {
   if (value == null || typeof value === 'object') {
@@ -68,8 +69,66 @@ function getFinishColor(product) {
   return '#cccccc';
 }
 
+function isLocalStylesheetReady(node) {
+  try {
+    if (!node.sheet) {
+      return false;
+    }
+
+    void node.sheet.cssRules;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function waitForStylesheet(node) {
+  if (!node.href || node.rel.toLowerCase() !== 'stylesheet') {
+    return Promise.resolve();
+  }
+
+  const stylesheetUrl = new URL(node.href, window.location.href);
+  if (stylesheetUrl.origin !== window.location.origin) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+
+    function done() {
+      if (!settled) {
+        settled = true;
+        window.clearInterval(poll);
+        node.removeEventListener('load', done);
+        node.removeEventListener('error', done);
+        resolve();
+      }
+    }
+
+    const poll = window.setInterval(() => {
+      if (isLocalStylesheetReady(node)) {
+        done();
+      }
+    }, 50);
+
+    if (isLocalStylesheetReady(node)) {
+      done();
+      return;
+    }
+
+    node.addEventListener('load', done, { once: true });
+    node.addEventListener('error', done, { once: true });
+  });
+}
+
 function useFormaniStyles() {
+  const [stylesReady, setStylesReady] = useState(false);
+
   useEffect(() => {
+    holdAppBoot();
+    setStylesReady(false);
+
+    let cancelled = false;
     const links = [
       {
         id: 'formani-framework-css',
@@ -85,9 +144,10 @@ function useFormaniStyles() {
       },
     ];
 
-    links.forEach(({ id, href }) => {
-      if (document.getElementById(id)) {
-        return;
+    const nodes = links.map(({ id, href }) => {
+      const existing = document.getElementById(id);
+      if (existing) {
+        return existing;
       }
 
       const link = document.createElement('link');
@@ -96,14 +156,24 @@ function useFormaniStyles() {
       link.href = href;
       link.dataset.productDetailStyle = 'true';
       document.head.appendChild(link);
+      return link;
+    });
+
+    Promise.all(nodes.map(waitForStylesheet)).then(() => {
+      if (!cancelled) {
+        setStylesReady(true);
+      }
     });
 
     return () => {
+      cancelled = true;
       document
         .querySelectorAll('link[data-product-detail-style="true"]')
         .forEach((link) => link.remove());
     };
   }, []);
+
+  return stylesReady;
 }
 
 function FormaniLogo() {
@@ -184,12 +254,13 @@ function Arrow() {
 }
 
 export default function ProductDetail() {
-  useFormaniStyles();
+  const stylesReady = useFormaniStyles();
 
   const params = useParams();
   const navigate = useNavigate();
   const productId = getProductIdFromRoute(params['*']);
   const [products, setProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -205,10 +276,12 @@ export default function ProductDetail() {
         const data = await response.json();
         if (!cancelled) {
           setProducts(data);
+          setProductsLoaded(true);
         }
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError.message);
+          setProductsLoaded(true);
         }
       }
     }
@@ -246,6 +319,18 @@ export default function ProductDetail() {
       .filter(Boolean)
       .slice(0, 8);
   }, [product, products]);
+
+  useLayoutEffect(() => {
+    if (!stylesReady || !productsLoaded) {
+      return undefined;
+    }
+
+    return releaseAppBootBeforePaint();
+  }, [productsLoaded, stylesReady]);
+
+  if (!stylesReady || !productsLoaded) {
+    return null;
+  }
 
   if (error) {
     return (

@@ -1,6 +1,22 @@
+import { useLayoutEffect, useState } from 'react';
 import './BrandStoryFrame.css';
+import { holdAppBoot, releaseAppBootBeforePaint } from '../utils/appBoot.js';
 
 export default function BrandStoryFrame() {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useLayoutEffect(() => {
+    holdAppBoot();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isLoaded) {
+      return undefined;
+    }
+
+    return releaseAppBootBeforePaint();
+  }, [isLoaded]);
+
   // The embedded brand-story page is a Next.js app: its <Link> intercepts clicks
   // and routes inside the iframe. To make the header logo go to the main site,
   // attach a capture-phase listener (runs before Next's handler) that navigates
@@ -20,6 +36,8 @@ export default function BrandStoryFrame() {
     } catch (_) {
       /* cross-origin or not ready — ignore */
     }
+
+    setIsLoaded(true);
   };
 
   return (

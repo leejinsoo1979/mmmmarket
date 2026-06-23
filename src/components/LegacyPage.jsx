@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { holdAppBoot, releaseAppBootBeforePaint } from '../utils/appBoot.js';
 
 const allowedRoutes = new Set([
   '/',
@@ -233,17 +234,33 @@ function replayLegacyLoadEvents() {
 export default function LegacyPage({ source }) {
   const [markup, setMarkup] = useState('');
   const [error, setError] = useState('');
+  const [isReady, setIsReady] = useState(false);
   const containerRef = useRef(null);
   const navigate = useNavigate();
 
   const cacheKey = useMemo(() => `${source}?react=${Date.now()}`, [source]);
 
+  useLayoutEffect(() => {
+    holdAppBoot();
+    setIsReady(false);
+  }, [source]);
+
+  useLayoutEffect(() => {
+    if (!isReady && !error) {
+      return undefined;
+    }
+
+    return releaseAppBootBeforePaint();
+  }, [error, isReady]);
+
   useEffect(() => {
     let cancelled = false;
 
     async function loadPage() {
+      holdAppBoot();
       setError('');
       setMarkup('');
+      setIsReady(false);
 
       try {
         const response = await fetch(cacheKey);
@@ -279,12 +296,14 @@ export default function LegacyPage({ source }) {
             if (!cancelled) {
               scheduleDeferredSliders(scripts);
               replayLegacyLoadEvents();
+              setIsReady(true);
             }
           }, 0);
         }
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError.message);
+          setIsReady(true);
         }
       }
     }
