@@ -67,6 +67,19 @@ function addHeadNode(node) {
   return clone;
 }
 
+function isStylesheetReady(node) {
+  try {
+    if (!node.sheet) {
+      return false;
+    }
+
+    void node.sheet.cssRules;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function waitForStylesheet(node) {
   if (node.tagName !== 'LINK' || !node.href || node.rel.toLowerCase() !== 'stylesheet') {
     return Promise.resolve();
@@ -91,21 +104,12 @@ function waitForStylesheet(node) {
     }
 
     const poll = window.setInterval(() => {
-      try {
-        if (node.sheet) {
-          done();
-        }
-      } catch {
+      if (isStylesheetReady(node)) {
         done();
       }
     }, 50);
 
-    try {
-      if (node.sheet) {
-        done();
-        return;
-      }
-    } catch {
+    if (isStylesheetReady(node)) {
       done();
       return;
     }
