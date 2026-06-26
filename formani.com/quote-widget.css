@@ -6,7 +6,10 @@
   margin:0 !important;
   min-height:100vh;
 }
-#mmm-quote{ width:100% !important; }
+#mmm-quote{
+  width:100% !important;
+  padding-top:clamp(72px, 7.5vw, 128px) !important;
+}
 #mmm-quote .q-title{ font-size:26px !important; }
 #mmm-quote .q-search input{ padding:14px 16px !important; font-size:16px !important; }
 #mmm-quote .q-none{ padding:48px 0 !important; }
@@ -29,6 +32,7 @@ main:has(.collection-search-app){ overflow: visible !important; }
   .collection-search-app__left-panel.mmm-quote-host{
     position:static; max-height:none; overflow:visible;
   }
+  #mmm-quote{ padding-top:24px !important; }
 }
 #mmm-quote{ font-family:inherit; color:#1d1d1b; }
 #mmm-quote *{ box-sizing:border-box; }
