@@ -82,3 +82,11 @@ body {
 .ccm-page .wishlist-item-icon .fa-shopping-cart {
   font-size: 1.2em;
 }
+
+.ccm-page .wishlist-item-icon {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  line-height: 1 !important;
+  padding-top: 0 !important;
+}

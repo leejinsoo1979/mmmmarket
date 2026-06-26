@@ -404,12 +404,22 @@ C30.9,10,30.9,10,31,9.9z"></path>
                 }
 
                 groups.forEach(function(group, index) {
+                    var hit = group.closest('.ais-Hits-item, .ais-InfiniteHits-item') || group.parentElement;
                     group.removeAttribute('id');
                     group.removeAttribute('data-mmm-category-anchor');
 
                     var category = categories[index];
                     if (!category) {
+                        if (hit) {
+                            hit.style.display = 'none';
+                            hit.setAttribute('data-mmm-hidden-category', 'true');
+                        }
                         return;
+                    }
+
+                    if (hit && hit.getAttribute('data-mmm-hidden-category') === 'true') {
+                        hit.style.display = '';
+                        hit.removeAttribute('data-mmm-hidden-category');
                     }
 
                     group.id = category.id;
@@ -420,6 +430,10 @@ C30.9,10,30.9,10,31,9.9z"></path>
                     if (title && title.textContent.trim() !== category.label) {
                         title.textContent = category.label;
                     }
+                });
+
+                Array.prototype.forEach.call(document.querySelectorAll('.collection-search-app--catalog .ais-Pagination'), function(pagination) {
+                    pagination.style.display = 'none';
                 });
 
                 return true;
