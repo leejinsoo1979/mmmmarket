@@ -55,14 +55,23 @@ function scrollToHash(hash, behavior = 'smooth') {
     return;
   }
 
-  const target = document.getElementById(hash.slice(1));
-  if (!target) {
-    return;
+  let attempts = 0;
+
+  function tryScroll() {
+    attempts += 1;
+    const target = document.getElementById(hash.slice(1));
+
+    if (target) {
+      target.scrollIntoView({ behavior, block: 'start' });
+      return;
+    }
+
+    if (attempts < 20) {
+      window.setTimeout(tryScroll, 150);
+    }
   }
 
-  window.setTimeout(() => {
-    target.scrollIntoView({ behavior, block: 'start' });
-  }, 60);
+  window.setTimeout(tryScroll, 60);
 }
 
 function addHeadNode(node) {
@@ -341,6 +350,10 @@ export default function LegacyPage({ source }) {
     }
 
     function handleClick(event) {
+      if (event.defaultPrevented) {
+        return;
+      }
+
       const link = event.target.closest('a[href]');
       if (!link) {
         return;

@@ -63,7 +63,7 @@
     <script type="text/javascript" src="/concrete/js/jquery.js?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37"></script>
     <link href="/application/files/cache/css/c901f7edde709003dcb18db6e55035957d29375c.css?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37" rel="stylesheet" type="text/css" media="all" data-source="/concrete/css/features/imagery/frontend.css?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37 /concrete/css/features/navigation/frontend.css?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37 /concrete/css/features/social/frontend.css?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37">
     <link href="/concrete/css/fontawesome/all.css?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37" rel="stylesheet" type="text/css" media="all">
-<style id="mmm-logo-fix">.footer__logo--text{display:block!important;width:auto!important;height:auto!important;color:inherit;font:600 16px/1.05 Arial,sans-serif;letter-spacing:0;text-align:left;line-height:1.05!important}.footer__logo--text span{display:block}.footer__logo--text span+span{margin-top:2px}.ccm-page .logo{width:200px}</style><style id="product-category-scroll-style">html{scroll-behavior:smooth}.product-category-sections{display:grid;gap:48px;margin-top:32px}.product-category-section{min-height:42vh;scroll-margin-top:128px;border-top:1px solid rgba(0,0,0,.18);padding-top:24px}.product-category-section h2{margin:0;font-size:clamp(40px,7vw,104px);font-weight:400;line-height:.95;letter-spacing:0;text-transform:none}@media (max-width:767px){.product-category-sections{gap:36px}.product-category-section{min-height:34vh;scroll-margin-top:96px}.product-category-section h2{font-size:44px}}</style></head>
+<style id="mmm-logo-fix">.footer__logo--text{display:block!important;width:auto!important;height:auto!important;color:inherit;font:600 16px/1.05 Arial,sans-serif;letter-spacing:0;text-align:left;line-height:1.05!important}.footer__logo--text span{display:block}.footer__logo--text span+span{margin-top:2px}.ccm-page .logo{width:200px}</style></head>
 
 <body>
     <!-- Google Tag Manager (noscript) -->
@@ -200,25 +200,14 @@ data-hover="DE">DE</span></a>
                                 </div>
                                 <div class="collection-search-app__right-panel">
                                     <h1 class="collection-search-app__heading">Products</h1>
-                                    <div class="product-category-sections" aria-label="Product categories">
-                                        <section id="category-hardware" class="product-category-section">
-                                            <h2>hardware</h2>
-                                        </section>
-                                        <section id="category-pannel" class="product-category-section">
-                                            <h2>pannel</h2>
-                                        </section>
-                                        <section id="category-presbevel" class="product-category-section">
-                                            <h2>presbevel</h2>
-                                        </section>
-                                        <section id="category-antipress" class="product-category-section">
-                                            <h2>antipress</h2>
-                                        </section>
-                                        <section id="category-bathmatch" class="product-category-section">
-                                            <h2>bathmatch</h2>
-                                        </section>
-                                        <section id="category-stable-core" class="product-category-section">
-                                            <h2>stable core</h2>
-                                        </section>
+                                    <h3>Products:</h3>
+                                    <div>
+                                        <a href="#category-hardware">hardware</a><br>
+                                        <a href="#category-pannel">pannel</a><br>
+                                        <a href="#category-presbevel">presbevel</a><br>
+                                        <a href="#category-antipress">antipress</a><br>
+                                        <a href="#category-bathmatch">bathmatch</a><br>
+                                        <a href="#category-stable-core">stable core</a><br>
                                     </div>
                                 </div>
                             </div>
@@ -393,6 +382,114 @@ C30.9,10,30.9,10,31,9.9z"></path>
         </div>
     </div>
     <script src="/application/themes/ztheme/dist/js/main.min.js?77a9cc618d946237d1db5d07cc494946"></script>
+    <script id="mmm-product-category-anchors">
+        (function() {
+            var categories = [
+                { id: 'category-hardware', label: 'hardware' },
+                { id: 'category-pannel', label: 'pannel' },
+                { id: 'category-presbevel', label: 'presbevel' },
+                { id: 'category-antipress', label: 'antipress' },
+                { id: 'category-bathmatch', label: 'bathmatch' },
+                { id: 'category-stable-core', label: 'stable core' }
+            ];
+
+            function productPath(pathname) {
+                return pathname.replace(/\/index\.html$/, '').replace(/\.html$/, '').replace(/\/$/, '').toLowerCase();
+            }
+
+            function applyCategoryAnchors() {
+                var groups = Array.prototype.slice.call(document.querySelectorAll('.collection-search-app--catalog .product-group'));
+                if (!groups.length) {
+                    return false;
+                }
+
+                groups.forEach(function(group, index) {
+                    group.removeAttribute('id');
+                    group.removeAttribute('data-mmm-category-anchor');
+
+                    var category = categories[index];
+                    if (!category) {
+                        return;
+                    }
+
+                    group.id = category.id;
+                    group.setAttribute('data-mmm-category-anchor', category.label);
+                    group.style.scrollMarginTop = '128px';
+
+                    var title = group.querySelector('.product-side__inner h3');
+                    if (title && title.textContent.trim() !== category.label) {
+                        title.textContent = category.label;
+                    }
+                });
+
+                return true;
+            }
+
+            function scrollToCategory(hash, behavior) {
+                if (!hash || hash.indexOf('#category-') !== 0) {
+                    return false;
+                }
+
+                var didApply = applyCategoryAnchors();
+                var target = document.getElementById(hash.slice(1));
+                if (!target) {
+                    return false;
+                }
+
+                window.setTimeout(function() {
+                    target.scrollIntoView({ behavior: behavior || (didApply ? 'smooth' : 'auto'), block: 'start' });
+                }, 80);
+                return true;
+            }
+
+            document.addEventListener('click', function(event) {
+                var link = event.target.closest && event.target.closest('a[href*="#category-"]');
+                if (!link) {
+                    return;
+                }
+
+                var url = new URL(link.getAttribute('href'), window.location.origin);
+                if (url.origin !== window.location.origin || productPath(url.pathname) !== '/products/catalogue') {
+                    return;
+                }
+
+                event.preventDefault();
+                if (productPath(window.location.pathname) !== '/products/catalogue') {
+                    window.location.href = url.pathname + url.hash;
+                    return;
+                }
+
+                history.pushState(null, '', url.hash);
+                scrollToCategory(url.hash, 'smooth');
+            }, true);
+
+            var observer = new MutationObserver(function() {
+                applyCategoryAnchors();
+                scrollToCategory(window.location.hash, 'auto');
+            });
+
+            function start() {
+                applyCategoryAnchors();
+                scrollToCategory(window.location.hash, 'auto');
+
+                var app = document.querySelector('.collection-search-app') || document.getElementById('vue-sitesearch-34412') || document.body;
+                observer.observe(app, { childList: true, subtree: true });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', start);
+            } else {
+                start();
+            }
+
+            window.addEventListener('hashchange', function() {
+                scrollToCategory(window.location.hash, 'smooth');
+            });
+            window.addEventListener('load', function() {
+                scrollToCategory(window.location.hash, 'auto');
+            });
+        })();
+    </script>
     <script type="text/javascript" src="/application/files/cache/js/f404a2d1859caca9b22d361b456394be21fcff08.js?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37" data-source="/concrete/js/features/imagery/frontend.js?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37 /concrete/js/features/navigation/frontend.js?ccm_nocache=98dab283dcfae7d812ce37fc0fd61b57bd2d8d37"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" integrity="sha512-5A8nwdMOWrSz20fDsjczgUidUBR8liPYU+WymTZP1lmY9G6Oc7HlZv156XqnsgNUzTyMefFTcsFH/tnJE/+xBg==" crossorigin="anonymous" referrerpolicy="no-referrer"
     />
