@@ -49,7 +49,7 @@
   var els = {};
   function buildUI(host) {
     host.innerHTML =
-      '<div class="q-title">견적서</div>' +
+      '<div class="q-title">Estimate</div>' +
       '<div class="q-sub">제품을 검색해 담으면 수량·금액이 자동 계산됩니다. (VAT 포함, ₩)</div>' +
       '<div class="q-search"><input type="text" id="q-search" placeholder="제품명 · 코드 · 마감 검색…" autocomplete="off">' +
       '<div class="q-results" id="q-results"></div></div>' +

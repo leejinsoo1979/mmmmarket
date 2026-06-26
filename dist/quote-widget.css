@@ -36,7 +36,7 @@ main:has(.collection-search-app){ overflow: visible !important; }
 }
 #mmm-quote{ font-family:inherit; color:#1d1d1b; }
 #mmm-quote *{ box-sizing:border-box; }
-#mmm-quote .q-title{ font-size:20px; font-weight:700; margin:0 0 4px; letter-spacing:-.01em; }
+#mmm-quote .q-title{ font-size:20px; font-weight:700; margin:0 0 4px; letter-spacing:-.01em; text-align:center; }
 #mmm-quote .q-sub{ font-size:12px; color:#888; margin:0 0 16px; }
 #mmm-quote .q-rate{ display:flex; align-items:center; gap:6px; font-size:12px; color:#666; margin:0 0 14px; }
 #mmm-quote .q-rate input{ width:90px; padding:4px 6px; border:1px solid #ddd; border-radius:4px; font-size:12px; text-align:right; }
