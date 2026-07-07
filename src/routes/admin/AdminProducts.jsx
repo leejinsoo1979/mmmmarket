@@ -3,6 +3,7 @@ import {
   applyOverlay,
   buildFullExport,
   downloadJson,
+  fileToDataUri,
   formatWon,
   fromWon,
   getOverlay,
@@ -72,8 +73,14 @@ export default function AdminProducts() {
   const changeCount = overlayCount(overlay);
 
   function updateOverlay(next) {
-    saveOverlay(next);
+    if (!saveOverlay(next)) {
+      alert(
+        '브라우저 저장 공간이 가득 찼습니다.\n"JSON 내보내기"로 지금까지의 변경을 파일에 반영한 뒤 "변경 초기화"를 해주세요.'
+      );
+      return false;
+    }
     setOverlay(next);
+    return true;
   }
 
   function openEdit(product) {
@@ -130,8 +137,21 @@ export default function AdminProducts() {
       next.edits[id] = record;
     }
 
-    updateOverlay(next);
-    setDraft(null);
+    if (updateOverlay(next)) {
+      setDraft(null);
+    }
+  }
+
+  async function handleImageFile(event) {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const uri = await fileToDataUri(file);
+      setDraft((d) => ({ ...d, img: uri }));
+    } catch (err) {
+      alert(err.message || '이미지를 불러오지 못했습니다.');
+    }
   }
 
   function removeProduct(product) {
@@ -360,15 +380,35 @@ export default function AdminProducts() {
                 onChange={(e) => setDraft({ ...draft, won: e.target.value })}
               />
             </label>
-            <label>
-              이미지 URL
-              <input
-                type="url"
-                value={draft.img}
-                onChange={(e) => setDraft({ ...draft, img: e.target.value })}
-                placeholder="https://…"
-              />
-            </label>
+            <div className="img-field">
+              <span className="img-field-label">상품 이미지</span>
+              <div className="img-field-body">
+                {draft.img ? (
+                  <img className="img-preview" src={draft.img} alt="상품 이미지 미리보기" />
+                ) : (
+                  <span className="img-preview img-preview-empty">없음</span>
+                )}
+                <div className="img-field-controls">
+                  <label className="img-upload-btn">
+                    이미지 업로드
+                    <input type="file" accept="image/*" onChange={handleImageFile} />
+                  </label>
+                  {draft.img && (
+                    <button type="button" onClick={() => setDraft({ ...draft, img: '' })}>
+                      이미지 제거
+                    </button>
+                  )}
+                </div>
+              </div>
+              {!draft.img.startsWith('data:') && (
+                <input
+                  type="url"
+                  value={draft.img}
+                  onChange={(e) => setDraft({ ...draft, img: e.target.value })}
+                  placeholder="또는 이미지 URL 직접 입력 (https://…)"
+                />
+              )}
+            </div>
             <div className="modal-actions">
               <button type="button" onClick={() => setDraft(null)}>
                 취소

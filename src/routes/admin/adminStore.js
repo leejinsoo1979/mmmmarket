@@ -91,8 +91,14 @@ export function getOverlay() {
   };
 }
 
+/* localStorage 용량(약 5MB) 초과에 대비한다 — 이미지가 data URI로 저장되므로 */
 export function saveOverlay(overlay) {
-  writeJson(OVERLAY_KEY, overlay);
+  try {
+    writeJson(OVERLAY_KEY, overlay);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function resetOverlay() {
@@ -189,6 +195,38 @@ export function formatWon(value) {
 /* 원본 데이터에 개행 등이 섞여 있어("window\nhardware") 표시/그룹핑 전에 정규화한다 */
 export function normalizeText(value) {
   return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+}
+
+/* 업로드한 이미지 파일을 리사이즈·압축해 data URI로 변환한다.
+   서버가 없으므로 이미지 자체를 JSON/localStorage에 담는다 — 압축해야 용량이 버틴다 */
+export function fileToDataUri(file, maxSize = 800, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('이미지 파일이 아닙니다.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('이미지를 해석할 수 없습니다.'));
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 /* 견적 인덱스의 기준 단가(p) → 원화 공급가 */

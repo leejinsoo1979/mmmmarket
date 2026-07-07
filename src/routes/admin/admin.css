@@ -556,3 +556,60 @@
   gap: 10px;
   margin-top: 6px;
 }
+
+/* ---------- 이미지 업로드 필드 ---------- */
+
+.img-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+}
+
+.img-field-label {
+  display: block;
+}
+
+.img-field-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.img-preview {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  background: #f4f4f4;
+  border: 1px solid #e2e2e2;
+}
+
+.img-preview-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.img-field-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.img-upload-btn {
+  display: inline-block;
+  padding: 7px 14px;
+  background: #111;
+  color: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+}
+
+.img-upload-btn input[type='file'] {
+  display: none;
+}
