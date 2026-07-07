@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   applyOverlay,
+  fetchOrders,
   formatWon,
   getOrders,
   getOverlay,
@@ -9,12 +10,13 @@ import {
   loadBaseProducts,
   normalizeText,
   orderStatusLabel,
+  subscribeOrders,
   toWon
 } from './adminStore.js';
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState(null);
-  const orders = useMemo(() => getOrders(), []);
+  const [orders, setOrders] = useState([]);
   const overlay = useMemo(() => getOverlay(), []);
   const settings = useMemo(() => getSettings(), []);
 
@@ -23,8 +25,17 @@ export default function AdminDashboard() {
     loadBaseProducts().then(({ quote }) => {
       if (alive) setProducts(applyOverlay(quote, overlay));
     });
+
+    const loadOrders = () =>
+      fetchOrders()
+        .then((list) => alive && setOrders(list))
+        .catch(() => alive && setOrders(getOrders()));
+    loadOrders();
+    const unsubscribe = subscribeOrders(loadOrders);
+
     return () => {
       alive = false;
+      unsubscribe();
     };
   }, [overlay]);
 

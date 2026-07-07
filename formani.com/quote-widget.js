@@ -8,6 +8,10 @@
   var SETTINGS_KEY = 'mmm_site_settings';
   var OVERLAY_KEY = 'mmm_admin_overlay';
 
+  /* Supabase — 주문을 실시간으로 관리자 페이지에 전달한다 (publishable 키는 공개용) */
+  var SUPA_URL = 'https://xqaktggctlzistkvnnhr.supabase.co';
+  var SUPA_KEY = 'sb_publishable_QNhrV4GxeU10JLJpnbk7Sg_ATRpB_Hv';
+
   /* 관리자 페이지(/admin)에서 저장한 설정이 있으면 우선 적용 */
   var SETTINGS = {};
   try { SETTINGS = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { SETTINGS = {}; }
@@ -241,22 +245,48 @@
       '<div class="q-row q-grand"><span>합계</span><span>' + fmt(t.gross) + '</span></div>';
   }
 
-  function recordOrder(t) {
-    /* 관리자 페이지(/admin/orders)에서 조회할 수 있도록 주문 내역을 저장 */
+  function saveOrderLocal(order) {
+    /* Supabase 전송 실패 시 예비 저장 — 관리자 페이지가 로컬 기록도 읽을 수 있다 */
     try {
       var orders = JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
       orders.unshift({
-        no: 'Q' + Date.now(),
-        date: new Date().toISOString(),
-        status: 'new',
-        items: items.map(function (it) {
-          var p = BYID[it.id] || {};
-          return { id: it.id, n: p.n || it.id, f: p.f || '', c: p.c || '', qty: it.qty, unit: won(p.p || 0) };
-        }),
-        net: t.net, vat: t.vat, gross: t.gross
+        no: order.no, date: new Date().toISOString(), status: order.status,
+        items: order.items, net: order.net, vat: order.vat, gross: order.gross
       });
       localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(0, 500)));
     } catch (e) { /* storage unavailable — skip */ }
+  }
+
+  function recordOrder(t) {
+    /* 관리자 페이지(/admin/orders)에서 실시간 조회할 수 있도록 Supabase에 주문 저장 */
+    var order = {
+      no: 'Q' + Date.now(),
+      status: 'new',
+      items: items.map(function (it) {
+        var p = BYID[it.id] || {};
+        return { id: it.id, n: p.n || it.id, f: p.f || '', c: p.c || '', qty: it.qty, unit: won(p.p || 0) };
+      }),
+      net: t.net, vat: t.vat, gross: t.gross
+    };
+
+    try {
+      fetch(SUPA_URL + '/rest/v1/mmm_orders', {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPA_KEY,
+          Authorization: 'Bearer ' + SUPA_KEY
+        },
+        body: JSON.stringify(order)
+      }).then(function (r) {
+        if (!r.ok) saveOrderLocal(order);
+      }).catch(function () {
+        saveOrderLocal(order);
+      });
+    } catch (e) {
+      saveOrderLocal(order);
+    }
   }
 
   function orderQuote() {

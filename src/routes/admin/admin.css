@@ -413,6 +413,15 @@
 
 /* ---------- 주문 ---------- */
 
+.live-indicator {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #1d6b1d;
+  vertical-align: middle;
+}
+
 .order-row {
   cursor: pointer;
 }

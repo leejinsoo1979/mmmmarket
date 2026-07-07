@@ -5,6 +5,8 @@
      "내보내기"로 병합된 JSON을 내려받아 formani.com/zl/ 파일을 교체하면 영구 반영된다
    - 견적 주문(mmm_quote_orders)과 사이트 설정(mmm_site_settings)은 quote-widget.js 와 공유한다 */
 
+import { supabase } from './supabaseClient.js';
+
 const OVERLAY_KEY = 'mmm_admin_overlay';
 const ORDERS_KEY = 'mmm_quote_orders';
 const SETTINGS_KEY = 'mmm_site_settings';
@@ -178,12 +180,60 @@ export function orderStatusLabel(value) {
   return found ? found.label : value;
 }
 
+/* localStorage 주문 — Supabase 연결이 안 될 때의 예비 저장소 */
 export function getOrders() {
   return readJson(ORDERS_KEY, []);
 }
 
 export function saveOrders(orders) {
   writeJson(ORDERS_KEY, orders);
+}
+
+/* ---------- 주문: Supabase (기본 저장소) ---------- */
+
+function rowToOrder(row) {
+  return {
+    id: row.id,
+    no: row.no,
+    date: row.created_at,
+    status: row.status,
+    items: row.items || [],
+    net: row.net || 0,
+    vat: row.vat || 0,
+    gross: row.gross || 0
+  };
+}
+
+export async function fetchOrders() {
+  const { data, error } = await supabase
+    .from('mmm_orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data.map(rowToOrder);
+}
+
+export async function updateOrderStatus(id, status) {
+  const { error } = await supabase.from('mmm_orders').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteOrder(id) {
+  const { error } = await supabase.from('mmm_orders').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/* 주문 테이블 변경(접수/상태변경/삭제)을 실시간 구독한다. 해제 함수를 반환.
+   채널 이름은 구독마다 고유해야 한다 — 같은 이름을 재사용하면 페이지 전환 시 충돌한다 */
+let channelSeq = 0;
+export function subscribeOrders(onChange) {
+  const channel = supabase
+    .channel(`mmm-orders-admin-${++channelSeq}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'mmm_orders' }, onChange)
+    .subscribe();
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
 /* ---------- 공통 ---------- */

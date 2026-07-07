@@ -1,37 +1,89 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ORDER_STATUSES,
+  deleteOrder,
+  fetchOrders,
   formatWon,
   getOrders,
   orderStatusLabel,
-  saveOrders
+  saveOrders,
+  subscribeOrders,
+  updateOrderStatus
 } from './adminStore.js';
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState(getOrders);
+  const [orders, setOrders] = useState(null); // null = 로딩 중
+  const [source, setSource] = useState('supabase'); // 'supabase' | 'local'
   const [openNo, setOpenNo] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
 
-  function update(next) {
-    saveOrders(next);
-    setOrders(next);
+  const load = useCallback(async () => {
+    try {
+      const list = await fetchOrders();
+      setOrders(list);
+      setSource('supabase');
+    } catch {
+      setOrders(getOrders());
+      setSource('local');
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const unsubscribe = subscribeOrders(() => load());
+    return unsubscribe;
+  }, [load]);
+
+  async function setStatus(order, status) {
+    if (source === 'local') {
+      const next = getOrders().map((o) => (o.no === order.no ? { ...o, status } : o));
+      saveOrders(next);
+      setOrders(next);
+      return;
+    }
+    setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+    try {
+      await updateOrderStatus(order.id, status);
+    } catch {
+      alert('상태 변경에 실패했습니다. 네트워크를 확인해주세요.');
+      load();
+    }
   }
 
-  function setStatus(no, status) {
-    update(orders.map((o) => (o.no === no ? { ...o, status } : o)));
+  async function remove(order) {
+    if (!confirm(`주문 ${order.no} 기록을 삭제할까요?`)) return;
+    if (source === 'local') {
+      const next = getOrders().filter((o) => o.no !== order.no);
+      saveOrders(next);
+      setOrders(next);
+      return;
+    }
+    setOrders((prev) => prev.filter((o) => o.id !== order.id));
+    try {
+      await deleteOrder(order.id);
+    } catch {
+      alert('삭제에 실패했습니다. 네트워크를 확인해주세요.');
+      load();
+    }
   }
 
-  function remove(no) {
-    if (!confirm(`주문 ${no} 기록을 삭제할까요?`)) return;
-    update(orders.filter((o) => o.no !== no));
-  }
-
-  const visible = statusFilter ? orders.filter((o) => o.status === statusFilter) : orders;
+  const visible = orders
+    ? statusFilter
+      ? orders.filter((o) => o.status === statusFilter)
+      : orders
+    : [];
 
   return (
     <div className="admin-page">
       <div className="page-head">
-        <h1>주문 관리</h1>
+        <h1>
+          주문 관리
+          {source === 'supabase' && (
+            <span className="live-indicator" title="Supabase 실시간 연결됨">
+              ● 실시간
+            </span>
+          )}
+        </h1>
         <div className="page-actions">
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">전체 상태</option>
@@ -44,10 +96,19 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {orders.length === 0 && (
+      {source === 'local' && (
+        <p className="notice-bar">
+          Supabase에 연결할 수 없어 이 브라우저에 저장된 주문만 표시 중입니다. 네트워크 연결 후
+          새로고침하면 실시간 주문이 표시됩니다.
+        </p>
+      )}
+
+      {orders === null && <p className="muted">주문을 불러오는 중…</p>}
+
+      {orders !== null && orders.length === 0 && (
         <p className="muted">
           아직 접수된 견적 주문이 없습니다. 고객이 카탈로그 페이지에서 견적을 담고 "주문하기"를
-          누르면 이곳에 기록됩니다.
+          누르면 실시간으로 이곳에 나타납니다.
         </p>
       )}
 
@@ -67,19 +128,19 @@ export default function AdminOrders() {
           <tbody>
             {visible.map((o) => (
               <OrderRow
-                key={o.no}
+                key={o.id || o.no}
                 order={o}
                 open={openNo === o.no}
                 onToggle={() => setOpenNo(openNo === o.no ? null : o.no)}
-                onStatus={(status) => setStatus(o.no, status)}
-                onRemove={() => remove(o.no)}
+                onStatus={(status) => setStatus(o, status)}
+                onRemove={() => remove(o)}
               />
             ))}
           </tbody>
         </table>
       )}
 
-      {orders.length > 0 && visible.length === 0 && (
+      {orders !== null && orders.length > 0 && visible.length === 0 && (
         <p className="muted">"{orderStatusLabel(statusFilter)}" 상태의 주문이 없습니다.</p>
       )}
     </div>
