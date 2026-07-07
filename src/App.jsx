@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import LegacyPage from './components/LegacyPage.jsx';
 import BrandStoryFrame from './routes/BrandStoryFrame.jsx';
 import ProductDetail from './routes/ProductDetail.jsx';
+import Admin from './routes/admin/Admin.jsx';
 
 const routes = {
   home: '/react-pages/home.html',
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/about-us/contact" element={<LegacyPage source={routes.contact} />} />
       <Route path="/about-us/points-sale" element={<LegacyPage source={routes.pointsSale} />} />
       <Route path="/about-us/*" element={<Navigate to="/about-us/brand-story" replace />} />
+      <Route path="/admin/*" element={<Admin />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

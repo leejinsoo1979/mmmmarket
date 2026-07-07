@@ -96,3 +96,14 @@ main:has(.collection-search-app){ overflow: visible !important; }
   #mmm-quote-print tfoot td{ border:0; padding-top:6px; }
   #mmm-quote-print .qp-grand td{ font-size:16px; font-weight:700; border-top:2px solid #000; padding-top:10px; }
 }
+
+/* 관리자 설정 공지 문구 */
+#mmm-quote .q-notice{
+  margin:0 0 14px;
+  padding:10px 14px;
+  background:#111;
+  color:#fff;
+  font-size:13px;
+  line-height:1.5;
+  border-radius:3px;
+}

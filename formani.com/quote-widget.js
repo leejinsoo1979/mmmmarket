@@ -4,7 +4,17 @@
 (function () {
   'use strict';
   var ITEMS_KEY = 'mmm_quote_items';
-  var RATE = 1500;                   // base price → ₩ multiplier (internal; adjust here)
+  var ORDERS_KEY = 'mmm_quote_orders';
+  var SETTINGS_KEY = 'mmm_site_settings';
+  var OVERLAY_KEY = 'mmm_admin_overlay';
+
+  /* 관리자 페이지(/admin)에서 저장한 설정이 있으면 우선 적용 */
+  var SETTINGS = {};
+  try { SETTINGS = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { SETTINGS = {}; }
+  var RATE = Number(SETTINGS.rate) > 0 ? Number(SETTINGS.rate) : 1500;  // base price → ₩ multiplier
+  var ORDER_EMAIL = SETTINGS.orderEmail || 'contact@mmm.com';
+  var NOTICE = (SETTINGS.notice || '').trim();
+
   var PRODUCTS = [], BYID = {};
   var items = [];                    // [{id, qty}]
   var cartCaptureInstalled = false;
@@ -18,9 +28,34 @@
   function esc(s) { return (s || '').replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
   function attrEsc(s) { return esc(s).replace(/'/g, '&#39;'); }
 
+  /* 관리자 페이지에서 수정/추가/삭제한 상품(오버레이)을 원본 목록 위에 반영 */
+  function applyAdminOverlay(list) {
+    try {
+      var ov = JSON.parse(localStorage.getItem(OVERLAY_KEY)) || {};
+      var edits = ov.edits || {}, added = ov.added || [];
+      var deleted = {};
+      (ov.deleted || []).forEach(function (id) { deleted[id] = true; });
+      var out = [];
+      list.forEach(function (p) {
+        if (deleted[p.id]) return;
+        var e = edits[p.id];
+        if (e) {
+          var merged = {};
+          for (var k in p) merged[k] = p[k];
+          for (var j in e) if (e[j] != null && e[j] !== '') merged[j] = e[j];
+          out.push(merged);
+        } else {
+          out.push(p);
+        }
+      });
+      added.forEach(function (a) { out.push(a); });
+      return out;
+    } catch (e) { return list; }
+  }
+
   fetch('/zl/quote-products.json')
     .then(function (r) { return r.json(); })
-    .then(function (d) { PRODUCTS = d; d.forEach(function (p) { BYID[p.id] = p; }); mount(); })
+    .then(function (d) { PRODUCTS = applyAdminOverlay(d); PRODUCTS.forEach(function (p) { BYID[p.id] = p; }); mount(); })
     .catch(function () { /* index missing — stay silent */ });
 
   function mount() {
@@ -51,6 +86,7 @@
   var els = {};
   function buildUI(host) {
     host.innerHTML =
+      (NOTICE ? '<div class="q-notice">' + esc(NOTICE) + '</div>' : '') +
       '<div class="q-title">Estimate</div>' +
       '<div class="q-sub">제품을 검색해 담으면 수량·금액이 자동 계산됩니다. (VAT 포함, ₩)</div>' +
       '<div class="q-search"><input type="text" id="q-search" placeholder="제품명 · 코드 · 마감 검색…" autocomplete="off">' +
@@ -205,16 +241,35 @@
       '<div class="q-row q-grand"><span>합계</span><span>' + fmt(t.gross) + '</span></div>';
   }
 
+  function recordOrder(t) {
+    /* 관리자 페이지(/admin/orders)에서 조회할 수 있도록 주문 내역을 저장 */
+    try {
+      var orders = JSON.parse(localStorage.getItem(ORDERS_KEY)) || [];
+      orders.unshift({
+        no: 'Q' + Date.now(),
+        date: new Date().toISOString(),
+        status: 'new',
+        items: items.map(function (it) {
+          var p = BYID[it.id] || {};
+          return { id: it.id, n: p.n || it.id, f: p.f || '', c: p.c || '', qty: it.qty, unit: won(p.p || 0) };
+        }),
+        net: t.net, vat: t.vat, gross: t.gross
+      });
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(0, 500)));
+    } catch (e) { /* storage unavailable — skip */ }
+  }
+
   function orderQuote() {
     if (!items.length) { alert('담은 제품이 없습니다.'); return; }
     var t = totals();
+    recordOrder(t);
     var lines = items.map(function (it) {
       var p = BYID[it.id]; if (!p) return '';
       return '- ' + clean(p.n || p.id) + ' / ' + clean(p.c) + (p.f ? ' / ' + p.f : '') + ' / ' + p.id + ' / 수량 ' + it.qty;
     }).filter(Boolean);
     var subject = encodeURIComponent('Estimate order request');
     var body = encodeURIComponent(lines.join('\n') + '\n\n합계(VAT 포함): ' + fmt(t.gross));
-    window.location.href = 'mailto:contact@mmm.com?subject=' + subject + '&body=' + body;
+    window.location.href = 'mailto:' + ORDER_EMAIL + '?subject=' + subject + '&body=' + body;
   }
 
   function printQuote() {
